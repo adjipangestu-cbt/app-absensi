@@ -1,0 +1,6 @@
+{
+  "name": "Absensi Petugas - Anak Pulo",
+  "description": "Aplikasi presensi harian petugas jaga Posko Kebersihan Pulau Merak Kecil - Komunitas Anak Pulo dengan desain Coastal HR Mobile.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

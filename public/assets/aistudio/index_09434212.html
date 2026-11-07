@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Absensi Petugas - Anak Pulo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
+
+  <div class="bg-slate-800 p-6 rounded-2xl shadow-xl w-full max-w-md border border-slate-700">
+    <div class="text-center mb-4">
+      <span class="bg-emerald-600 text-xs font-bold px-3 py-1 rounded-full uppercase">Internal Anak Pulo</span>
+      <h1 class="text-2xl font-bold mt-2">Absensi Jaga Posko</h1>
+      <p class="text-xs text-slate-400 mt-1">Otomatis aktif selama 1 hari penuh sesuai tanggal</p>
+    </div>
+
+    <!-- Indikator Petugas Aktif Hari Ini -->
+    <div class="bg-slate-900/80 border border-slate-700 rounded-xl p-3 mb-5 text-center">
+      <p class="text-xs text-slate-400">Petugas Jaga Hari Ini:</p>
+      <p id="infoPetugasAktif" class="text-sm font-bold text-emerald-400 mt-0.5">🔄 Mengecek database...</p>
+    </div>
+
+    <!-- Langkah 1: Pilih Grup -->
+    <label class="block text-sm font-medium mb-2">1. Pilih Jadwal Grup:</label>
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <button type="button" onclick="pilihGrup('Grup A')" id="btnGrupA"
+        class="py-3 rounded-xl font-bold border border-slate-600 bg-slate-700 hover:bg-emerald-600 transition">
+        🅰️ GRUP A
+      </button>
+      <button type="button" onclick="pilihGrup('Grup B')" id="btnGrupB"
+        class="py-3 rounded-xl font-bold border border-slate-600 bg-slate-700 hover:bg-emerald-600 transition">
+        🅱️ GRUP B
+      </button>
+    </div>
+
+    <!-- Langkah 2: Pilih Nama -->
+    <label class="block text-sm font-medium mb-2">2. Pilih Nama Petugas:</label>
+    <select id="selectNama" class="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 text-white mb-6" disabled>
+      <option value="">-- Klik Grup A atau B Dulu --</option>
+    </select>
+
+    <!-- Tombol Tunggal Absen Hari Ini -->
+    <button onclick="kirimAbsen()" id="btnAbsen"
+      class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3.5 rounded-xl transition shadow-lg">
+      ✅ CATAT HADIR HARI INI
+    </button>
+
+    <p id="statusPesan" class="text-center text-sm font-semibold mt-4 hidden"></p>
+  </div>
+
+  <script>
+    // TEMPEL URL WEB APP APPS SCRIPT BARU MAS DI SINI:
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYxo6zvlorHVrQks7NfvCsN9WVOqtNVZskbIlnFYTqXC9pOAVtEJmi4tDBBf5Bhw_0/exec";
+
+    const dataAnggota = {
+      "Grup A": ["Bang Jeje", "Rian", "Dika", "Fajar"],
+      "Grup B": ["Ilham", "Reza", "Budi", "Wahyu Pulo"]
+    };
+
+    let grupTerpilih = "";
+
+    async function cekPetugas() {
+      const el = document.getElementById("infoPetugasAktif");
+      if (SCRIPT_URL.includes("TEMPEL_URL")) {
+        el.textContent = "⚠️ SCRIPT_URL belum diisi!";
+        el.className = "text-sm font-bold text-amber-400 mt-0.5";
+        return;
+      }
+      try {
+        const res = await fetch(SCRIPT_URL);
+        const json = await res.json();
+        el.textContent = json.petugasAktif;
+      } catch (err) {
+        el.textContent = "❌ Gagal terhubung ke Google Sheets";
+      }
+    }
+    cekPetugas();
+
+    function pilihGrup(grup) {
+      grupTerpilih = grup;
+      document.getElementById("btnGrupA").className = grup === "Grup A" 
+        ? "py-3 rounded-xl font-bold bg-emerald-600 border-2 border-emerald-300" 
+        : "py-3 rounded-xl font-bold border border-slate-600 bg-slate-700";
+      document.getElementById("btnGrupB").className = grup === "Grup B" 
+        ? "py-3 rounded-xl font-bold bg-emerald-600 border-2 border-emerald-300" 
+        : "py-3 rounded-xl font-bold border border-slate-600 bg-slate-700";
+
+      const select = document.getElementById("selectNama");
+      select.disabled = false;
+      select.innerHTML = '<option value="">-- Pilih Nama Anda --</option>';
+      
+      dataAnggota[grup].forEach(nama => {
+        const opt = document.createElement("option");
+        opt.value = nama;
+        opt.textContent = nama;
+        select.appendChild(opt);
+      });
+    }
+
+    async function kirimAbsen() {
+      const nama = document.getElementById("selectNama").value;
+      if (!grupTerpilih || !nama) {
+        alert("Pilih Grup dan Nama terlebih dahulu!");
+        return;
+      }
+
+      const pesan = document.getElementById("statusPesan");
+      pesan.textContent = "⏳ Mencatat kehadiran hari ini...";
+      pesan.className = "text-center text-sm font-semibold mt-4 text-amber-400";
+      pesan.classList.remove("hidden");
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            tipe: "absensi",
+            grup: grupTerpilih,
+            nama: nama
+          })
+        });
+        const hasil = await res.json();
+        document.getElementById("infoPetugasAktif").textContent = hasil.petugasAktif;
+
+        if (hasil.status === "sudah_absen") {
+          pesan.textContent = `ℹ️ ${nama} sudah tercatat hadir hari ini!`;
+          pesan.className = "text-center text-sm font-semibold mt-4 text-sky-400";
+        } else {
+          pesan.textContent = `✅ Berhasil! ${nama} (${grupTerpilih}) bertugas hari ini.`;
+          pesan.className = "text-center text-sm font-semibold mt-4 text-emerald-400";
+        }
+      } catch (err) {
+        pesan.textContent = "❌ Gagal mengirim data. Cek koneksi / URL Script.";
+        pesan.className = "text-center text-sm font-semibold mt-4 text-rose-400";
+      }
+    }
+  </script>
+</body>
+</html>

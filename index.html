@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Absensi Petugas - Anak Pulo</title>
+  <meta name="description" content="Aplikasi presensi harian petugas jaga Posko Kebersihan Pulau Merak Kecil - Komunitas Anak Pulo dengan desain Coastal HR Mobile." />
+  <meta property="og:title" content="Absensi Petugas - Anak Pulo" />
+  <meta property="og:description" content="Aplikasi presensi harian petugas jaga Posko Kebersihan Pulau Merak Kecil - Komunitas Anak Pulo dengan desain Coastal HR Mobile." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Google Fonts: Plus Jakarta Sans, DM Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ['"Plus Jakarta Sans"', 'sans-serif'],
+            sans: ['"DM Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            coastal: {
+              sand: '#F7F4EF',
+              shell: '#FFFFFF',
+              dune: '#E5DEC9',
+              abyssal: '#0B1D28',
+              lagoon: '#0D9488',
+              shallow: '#CCFBF1',
+              mint: '#F0FDFA',
+              coral: '#FF6B4A',
+              coralHover: '#E85838',
+            }
+          },
+          boxShadow: {
+            'coastal-xl': '0 20px 45px -12px rgba(11, 29, 40, 0.09), 0 4px 16px -4px rgba(11, 29, 40, 0.04)',
+            'coastal-card': '0 4px 14px -2px rgba(11, 29, 40, 0.05)',
+            'coral-cta': '0 10px 24px -4px rgba(255, 107, 74, 0.38)',
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Canvas Confetti CDN untuk Efek Perayaan Absensi -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      background-color: #F7F4EF;
+      color: #0B1D28;
+      font-family: 'DM Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, .font-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-mono-tabular {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    /* Custom subtle select arrow */
+    select#selectNama {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230B1D28' stroke-width='2.2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 1.15rem;
+    }
+    select#selectNama:disabled {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    }
+
+    /* Animasi Getar Kartu (Tactile Haptic Shake) */
+    @keyframes cardShake {
+      0%, 100% { transform: translate3d(0, 0, 0); }
+      15% { transform: translate3d(-6px, 0, 0) rotate(-0.6deg); }
+      30% { transform: translate3d(6px, 0, 0) rotate(0.6deg); }
+      45% { transform: translate3d(-5px, 0, 0) rotate(-0.4deg); }
+      60% { transform: translate3d(5px, 0, 0) rotate(0.4deg); }
+      75% { transform: translate3d(-2px, 0, 0); }
+    }
+
+    /* Animasi Pop & Getar Sukses Presensi (Celebration Pop + Tactile Vibration) */
+    @keyframes cardSuccessPop {
+      0% {
+        transform: scale(1) translate3d(0, 0, 0);
+        box-shadow: 0 20px 45px -12px rgba(11, 29, 40, 0.09);
+      }
+      20% {
+        transform: scale(1.022) translate3d(0, -3px, 0) rotate(-0.4deg);
+        box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.25), 0 24px 48px -10px rgba(13, 148, 136, 0.22);
+      }
+      40% {
+        transform: scale(1.018) translate3d(3px, -2px, 0) rotate(0.4deg);
+      }
+      60% {
+        transform: scale(1.012) translate3d(-2px, -1px, 0) rotate(-0.2deg);
+      }
+      80% {
+        transform: scale(1.005) translate3d(1px, 0, 0);
+      }
+      100% {
+        transform: scale(1) translate3d(0, 0, 0);
+        box-shadow: 0 20px 45px -12px rgba(11, 29, 40, 0.09);
+      }
+    }
+
+    @keyframes statusPopIn {
+      0% { opacity: 0; transform: translate3d(0, 6px, 0) scale(0.97); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    }
+
+    .animate-card-shake {
+      animation: cardShake 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+    .animate-card-success {
+      animation: cardSuccessPop 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .animate-status-pop {
+      animation: statusPopIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .animate-card-shake,
+      .animate-card-success,
+      .animate-status-pop {
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#F7F4EF] text-[#0B1D28] min-h-screen flex items-start sm:items-center justify-center p-3 sm:p-6">
+
+  <!-- 1. Mobile App Frame -->
+  <main id="kartuUtama" class="max-w-md w-full bg-white rounded-[32px] p-6 shadow-coastal-xl border border-[#E5DEC9] relative overflow-hidden transition-shadow duration-300">
+
+    <!-- Subtle top coastal ambient bar -->
+    <div class="
+      absolute top-0 left-0 right-0 h-1.5
+      bg-gradient-to-r from-[#0D9488] via-[#CCFBF1] to-[#FF6B4A]
+    " aria-hidden="true"></div>
+
+    <!-- 2. Top Bar (Organization Pill & Database Status) -->
+    <header class="flex items-center justify-between gap-2 pb-4 mb-4 border-b border-[#E5DEC9]/70">
+      <div class="inline-flex items-center gap-2 bg-[#F0FDFA] border border-[#CCFBF1] text-[#0D9488] pl-1.5 pr-3.5 py-1 rounded-full text-xs font-heading font-bold tracking-tight">
+        <span class="w-6 h-6 rounded-full bg-white border border-[#CCFBF1] flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+          <img
+            src="/assets/aistudio/image_8e491d81.png"
+            onerror="this.onerror=null;this.src='/public/assets/aistudio/image_8e491d81.png';"
+            alt="Logo Pulau Merak Kecil"
+            class="w-full h-full object-contain"
+          />
+        </span>
+        <span>Komunitas Anak Pulo • Posko Utama</span>
+      </div>
+
+      <div id="badgeKoneksi" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F7F4EF] border border-[#E5DEC9] text-[11px] font-semibold text-[#0B1D28]/80 shrink-0">
+        <span id="dotKoneksi" class="w-2 h-2 rounded-full bg-[#0D9488]" aria-hidden="true"></span>
+        <span id="teksKoneksi">Sistem Online</span>
+      </div>
+    </header>
+
+    <!-- 3. User Profile & Live Date/Time Header -->
+    <section aria-label="Profil Petugas dan Waktu Saat Ini" class="flex items-center justify-between gap-3 mb-5">
+      <!-- Left: Dynamic Avatar + Officer Name & Group Badge -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div
+          id="avatarInisial"
+          class="w-12 h-12 rounded-full bg-[#CCFBF1] border-2 border-[#0D9488]/30 text-[#0D9488] font-heading font-extrabold text-base flex items-center justify-center shrink-0 shadow-sm transition-colors duration-200"
+          aria-hidden="true"
+        >
+          AP
+        </div>
+        <div class="min-w-0">
+          <h1 id="headerNamaPetugas" class="font-heading font-extrabold text-base sm:text-lg text-[#0B1D28] truncate leading-tight">
+            Pilih Petugas
+          </h1>
+          <p id="headerGrupPetugas" class="text-xs font-medium text-[#0D9488] truncate mt-0.5">
+            Absensi Jaga Posko Harian
+          </p>
+        </div>
+      </div>
+
+      <!-- Right: Live Indonesian Date & Real-Time WIB Clock -->
+      <div class="text-right shrink-0">
+        <p id="liveTanggal" class="font-heading font-bold text-xs text-[#0B1D28] whitespace-nowrap">
+          Senin, 2 Nov 2026
+        </p>
+        <p id="liveWaktuHeader" class="font-mono-tabular text-[11px] font-semibold text-[#0B1D28]/70 mt-0.5 whitespace-nowrap">
+          07:58:55 WIB
+        </p>
+      </div>
+    </section>
+
+    <!-- 4. Kartu Jam Masuk Digital (Centerpiece Attendance Card) -->
+    <section id="kartuJamMasuk" aria-label="Jam Masuk Hari Ini" class="bg-white border border-[#E5DEC9] rounded-2xl p-4 mb-4 shadow-coastal-card text-center transition-all duration-300">
+      <div class="border-b border-[#E5DEC9] pb-2.5 mb-3 flex items-center justify-center gap-2">
+        <svg class="w-4 h-4 text-[#0D9488]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-xs font-heading font-bold tracking-tight text-[#0B1D28]/80">
+          Jam Masuk Hari Ini
+        </span>
+      </div>
+
+      <div
+        id="jamDigital"
+        class="text-3xl sm:text-4xl font-mono font-extrabold text-[#0B1D28] tracking-tight font-mono-tabular py-1"
+      >
+        07:58:55
+      </div>
+
+      <p class="text-[11px] text-[#0B1D28]/65 mt-1 font-medium">
+        Otomatis aktif selama 1 hari penuh sesuai tanggal
+      </p>
+    </section>
+
+    <!-- 5. Panel Petugas Aktif Hari Ini (Team on Duty) -->
+    <section aria-label="Petugas Jaga Hari Ini" class="bg-[#F0FDFA] border border-[#CCFBF1] rounded-2xl p-3.5 mb-4 flex items-center justify-between gap-3">
+      <div class="flex items-start gap-2.5 min-w-0">
+        <div class="w-8 h-8 rounded-xl bg-[#CCFBF1] text-[#0D9488] flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <p class="text-xs font-heading font-bold text-[#0D9488]">
+            Petugas Jaga Hari Ini
+          </p>
+          <p id="infoPetugasAktif" class="text-sm font-heading font-bold text-[#0B1D28] mt-0.5 break-words">
+            🔄 Mengecek database...
+          </p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onclick="cekPetugas()"
+        aria-label="Segarkan daftar petugas jaga hari ini"
+        title="Segarkan data dari Google Sheets"
+        class="w-10 h-10 rounded-xl bg-white hover:bg-[#CCFBF1]/60 border border-[#CCFBF1] text-[#0D9488] flex items-center justify-center shrink-0 transition active:scale-95"
+      >
+        <svg id="ikonRefresh" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+    </section>
+
+    <!-- 6. Form Pemilihan Shift & Petugas -->
+    <section aria-label="Formulir Pemilihan Jadwal Grup dan Nama Petugas" class="bg-white border border-[#E5DEC9] rounded-2xl p-4 mb-4 shadow-coastal-card">
+      <!-- Langkah 1: Pilih Grup -->
+      <div class="flex items-center justify-between mb-2">
+        <label class="block text-xs font-heading font-bold text-[#0B1D28]">
+          1. Pilih Jadwal Grup
+        </label>
+        <span id="indikatorGrup" class="text-[11px] font-semibold text-[#0D9488]">
+          Wajib dipilih
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5 mb-4">
+        <button
+          type="button"
+          onclick="pilihGrup('Grup A')"
+          id="btnGrupA"
+          class="py-3 px-4 rounded-xl font-heading font-bold text-sm border border-[#E5DEC9] bg-[#F7F4EF] text-[#0B1D28] hover:border-[#0D9488] transition flex items-center justify-center gap-2"
+        >
+          <span>🅰️</span>
+          <span>Grup A</span>
+        </button>
+
+        <button
+          type="button"
+          onclick="pilihGrup('Grup B')"
+          id="btnGrupB"
+          class="py-3 px-4 rounded-xl font-heading font-bold text-sm border border-[#E5DEC9] bg-[#F7F4EF] text-[#0B1D28] hover:border-[#0D9488] transition flex items-center justify-center gap-2"
+        >
+          <span>🅱️</span>
+          <span>Grup B</span>
+        </button>
+      </div>
+
+      <!-- Langkah 2: Pilih Nama -->
+      <label for="selectNama" class="block text-xs font-heading font-bold text-[#0B1D28] mb-2">
+        2. Pilih Nama Petugas
+      </label>
+      <select
+        id="selectNama"
+        onchange="sinkronProfilPetugas()"
+        class="w-full p-3.5 pr-10 rounded-xl bg-[#F7F4EF] border border-[#E5DEC9] text-[#0B1D28] font-heading font-bold text-sm mb-3.5 focus:outline-none focus:ring-2 focus:ring-[#0D9488] focus:border-[#0D9488] transition disabled:opacity-60 disabled:cursor-not-allowed"
+        disabled
+      >
+        <option value="">-- Klik Grup A atau B Dulu --</option>
+      </select>
+
+      <!-- Pratinjau Kartu Identitas Petugas (Terinspirasi Layar Kanan Referensi) -->
+      <div
+        id="kartuIdentitasPreview"
+        class="bg-[#F7F4EF]/80 border border-[#E5DEC9] rounded-xl p-3 flex items-center justify-between gap-2.5 transition-all duration-200"
+      >
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div
+            id="badgeInisialPreview"
+            class="w-9 h-9 rounded-lg bg-white border border-[#E5DEC9] text-[#0B1D28] font-heading font-extrabold text-xs flex items-center justify-center shrink-0"
+          >
+            --
+          </div>
+          <div class="min-w-0">
+            <p id="namaPreviewKartu" class="font-heading font-bold text-xs sm:text-sm text-[#0B1D28] truncate">
+              Belum ada petugas dipilih
+            </p>
+            <p id="idPreviewKartu" class="text-[11px] font-medium text-[#0B1D28]/65">
+              Pilih jadwal grup &amp; nama petugas
+            </p>
+          </div>
+        </div>
+        <span
+          id="statusSiapBadge"
+          class="text-[11px] font-heading font-bold px-2.5 py-1 rounded-full bg-white border border-[#E5DEC9] text-[#0B1D28]/70 shrink-0"
+        >
+          Menunggu
+        </span>
+      </div>
+    </section>
+
+    <!-- 7. Location Badge (Lencana Lokasi Posko) -->
+    <div
+      aria-label="Lokasi Posko Presensi"
+      class="bg-[#F7F4EF] border border-[#E5DEC9] rounded-2xl p-3.5 mb-5 flex items-start gap-3"
+    >
+      <div class="w-8 h-8 rounded-full bg-[#CCFBF1] text-[#0D9488] flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-xs font-heading font-bold text-[#0B1D28] leading-snug">
+          📍 Posko Kebersihan Pulau Merak Kecil, Cilegon, Banten
+        </p>
+        <p class="text-[11px] text-[#0B1D28]/65 mt-0.5">
+          Titik koordinat posko terverifikasi • Area PULO-MAPS
+        </p>
+      </div>
+    </div>
+
+    <!-- 8. Primary Action Button (Full-Width Pill CTA) -->
+    <button
+      type="button"
+      onclick="kirimAbsen()"
+      id="btnAbsen"
+      class="w-full bg-[#FF6B4A] hover:bg-[#E85838] active:scale-[0.99] text-white font-heading font-extrabold text-base py-4 px-6 rounded-full transition shadow-coral-cta flex items-center justify-center gap-2.5 cursor-pointer"
+    >
+      <!-- Login Arrow SVG ([ ➔| Catat Jam Masuk ]) -->
+      <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+      </svg>
+      <span>Catat Jam Masuk</span>
+    </button>
+
+    <!-- Status Pesan -->
+    <p id="statusPesan" role="status" aria-live="polite" class="text-center text-sm font-semibold mt-4 hidden"></p>
+
+  </main>
+
+  <script>
+    // TEMPEL URL WEB APP APPS SCRIPT BARU MAS DI SINI:
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYxo6zvlorHVrQks7NfvCsN9WVOqtNVZskbIlnFYTqXC9pOAVtEJmi4tDBBf5Bhw_0/exec";
+
+    const dataAnggota = {
+      "Grup A": ["Bang Jeje", "Rian", "Dika", "Fajar"],
+      "Grup B": ["Ilham", "Reza", "Budi", "Wahyu Pulo"]
+    };
+
+    let grupTerpilih = "";
+
+    // Utilitas Jam & Tanggal Real-Time (WIB)
+    function updateJamDanTanggal() {
+      const sekarang = new Date();
+      const daftarHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+      const daftarBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+
+      const namaHari = daftarHari[sekarang.getDay()];
+      const tanggal = sekarang.getDate();
+      const namaBulan = daftarBulan[sekarang.getMonth()];
+      const tahun = sekarang.getFullYear();
+
+      const jam = String(sekarang.getHours()).padStart(2, "0");
+      const menit = String(sekarang.getMinutes()).padStart(2, "0");
+      const detik = String(sekarang.getSeconds()).padStart(2, "0");
+      const stringJam = `${jam}:${menit}:${detik}`;
+
+      const elTanggal = document.getElementById("liveTanggal");
+      const elWaktuHeader = document.getElementById("liveWaktuHeader");
+      const elJamDigital = document.getElementById("jamDigital");
+
+      if (elTanggal) elTanggal.textContent = `${namaHari}, ${tanggal} ${namaBulan} ${tahun}`;
+      if (elWaktuHeader) elWaktuHeader.textContent = `${stringJam} WIB`;
+      if (elJamDigital) elJamDigital.textContent = stringJam;
+    }
+
+    updateJamDanTanggal();
+    setInterval(updateJamDanTanggal, 1000);
+
+    // Utilitas Inisial Nama untuk Avatar
+    function ambilInisial(nama) {
+      if (!nama || !nama.trim()) return "AP";
+      const bagian = nama.trim().split(/\s+/);
+      if (bagian.length === 1) {
+        return bagian[0].substring(0, 2).toUpperCase();
+      }
+      return (bagian[0][0] + bagian[bagian.length - 1][0]).toUpperCase();
+    }
+
+    // Sinkronisasi Header Profil & Kartu Pratinjau saat Grup/Nama berubah
+    function sinkronProfilPetugas() {
+      const select = document.getElementById("selectNama");
+      const nama = select ? select.value : "";
+
+      const elAvatar = document.getElementById("avatarInisial");
+      const elNamaHeader = document.getElementById("headerNamaPetugas");
+      const elGrupHeader = document.getElementById("headerGrupPetugas");
+
+      const elBadgePreview = document.getElementById("badgeInisialPreview");
+      const elNamaPreview = document.getElementById("namaPreviewKartu");
+      const elIdPreview = document.getElementById("idPreviewKartu");
+      const elStatusSiap = document.getElementById("statusSiapBadge");
+      const elKartuPreview = document.getElementById("kartuIdentitasPreview");
+
+      if (!grupTerpilih) {
+        elAvatar.textContent = "AP";
+        elNamaHeader.textContent = "Pilih Petugas";
+        elGrupHeader.textContent = "Absensi Jaga Posko Harian";
+        elBadgePreview.textContent = "--";
+        elNamaPreview.textContent = "Belum ada petugas dipilih";
+        elIdPreview.textContent = "Pilih jadwal grup & nama petugas";
+        elIdPreview.className = "text-[11px] font-medium text-[#0B1D28]/65";
+        elStatusSiap.textContent = "Menunggu";
+        elStatusSiap.className = "text-[11px] font-heading font-bold px-2.5 py-1 rounded-full bg-white border border-[#E5DEC9] text-[#0B1D28]/70 shrink-0";
+        return;
+      }
+
+      if (!nama) {
+        elAvatar.textContent = grupTerpilih === "Grup A" ? "GA" : "GB";
+        elAvatar.className = "w-12 h-12 rounded-full bg-[#CCFBF1] border-2 border-[#0D9488]/40 text-[#0D9488] font-heading font-extrabold text-base flex items-center justify-center shrink-0 shadow-sm transition-colors duration-200";
+        elNamaHeader.textContent = "Pilih Petugas";
+        elGrupHeader.textContent = `${grupTerpilih} • Shift Harian Posko`;
+
+        elBadgePreview.textContent = grupTerpilih === "Grup A" ? "A" : "B";
+        elBadgePreview.className = "w-9 h-9 rounded-lg bg-[#CCFBF1] border border-[#0D9488]/30 text-[#0D9488] font-heading font-extrabold text-xs flex items-center justify-center shrink-0";
+        elNamaPreview.textContent = `Jadwal ${grupTerpilih} Aktif`;
+        elIdPreview.textContent = "Pilih nama petugas pada dropdown di atas";
+        elIdPreview.className = "text-[11px] font-medium text-[#0B1D28]/65";
+        elStatusSiap.textContent = grupTerpilih;
+        elStatusSiap.className = "text-[11px] font-heading font-bold px-2.5 py-1 rounded-full bg-[#F0FDFA] border border-[#CCFBF1] text-[#0D9488] shrink-0";
+        elKartuPreview.className = "bg-[#F7F4EF]/80 border border-[#E5DEC9] rounded-xl p-3 flex items-center justify-between gap-2.5 transition-all duration-200";
+        return;
+      }
+
+      const inisial = ambilInisial(nama);
+      const daftarGrup = dataAnggota[grupTerpilih] || [];
+      const urutan = daftarGrup.indexOf(nama) + 1;
+      const kodeGrup = grupTerpilih === "Grup A" ? "GA" : "GB";
+      const nomorId = `AP-${kodeGrup}-20260${urutan > 0 ? urutan : 1}`;
+
+      const pesan = document.getElementById("statusPesan");
+      if (pesan) pesan.classList.add("hidden");
+
+      elAvatar.textContent = inisial;
+      elAvatar.className = "w-12 h-12 rounded-full bg-[#0D9488] border-2 border-[#CCFBF1] text-white font-heading font-extrabold text-base flex items-center justify-center shrink-0 shadow-sm transition-colors duration-200";
+      elNamaHeader.textContent = nama;
+      elGrupHeader.textContent = `${grupTerpilih} • ${nomorId}`;
+
+      elBadgePreview.textContent = inisial;
+      elBadgePreview.className = "w-9 h-9 rounded-lg bg-[#0D9488] text-white font-heading font-extrabold text-xs flex items-center justify-center shrink-0 shadow-sm";
+      elNamaPreview.textContent = nama;
+      elIdPreview.textContent = `${grupTerpilih} • ${nomorId}`;
+      elIdPreview.className = "font-mono-tabular text-[11px] font-semibold text-[#0D9488]";
+      elStatusSiap.textContent = "Siap Absen";
+      elStatusSiap.className = "text-[11px] font-heading font-bold px-2.5 py-1 rounded-full bg-[#CCFBF1] border border-[#0D9488]/30 text-[#0D9488] shrink-0";
+      elKartuPreview.className = "bg-[#F0FDFA] border border-[#0D9488]/40 rounded-xl p-3 flex items-center justify-between gap-2.5 transition-all duration-200";
+    }
+
+    async function cekPetugas() {
+      const el = document.getElementById("infoPetugasAktif");
+      const ikonRefresh = document.getElementById("ikonRefresh");
+      const dotKoneksi = document.getElementById("dotKoneksi");
+      const teksKoneksi = document.getElementById("teksKoneksi");
+
+      if (SCRIPT_URL.includes("TEMPEL_URL")) {
+        el.textContent = "⚠️ SCRIPT_URL belum diisi!";
+        el.className = "text-sm font-heading font-bold text-amber-700 mt-0.5";
+        return;
+      }
+
+      el.textContent = "🔄 Mengecek database...";
+      el.className = "text-sm font-heading font-bold text-[#0B1D28]/70 mt-0.5";
+      if (ikonRefresh) ikonRefresh.classList.add("animate-spin");
+
+      try {
+        const res = await fetch(SCRIPT_URL);
+        const json = await res.json();
+        el.textContent = json.petugasAktif || "Belum ada petugas tercatat hari ini";
+        el.className = "text-sm font-heading font-bold text-[#0B1D28] mt-0.5 break-words";
+        if (dotKoneksi) dotKoneksi.className = "w-2 h-2 rounded-full bg-[#0D9488]";
+        if (teksKoneksi) teksKoneksi.textContent = "Sistem Online";
+      } catch (err) {
+        el.textContent = "❌ Gagal terhubung ke Google Sheets";
+        el.className = "text-sm font-heading font-bold text-rose-600 mt-0.5";
+        if (dotKoneksi) dotKoneksi.className = "w-2 h-2 rounded-full bg-rose-500";
+        if (teksKoneksi) teksKoneksi.textContent = "Cek Koneksi";
+      } finally {
+        if (ikonRefresh) ikonRefresh.classList.remove("animate-spin");
+      }
+    }
+    cekPetugas();
+
+    function pilihGrup(grup) {
+      grupTerpilih = grup;
+      const kelasAktif = "py-3 px-4 rounded-xl font-heading font-bold text-sm bg-[#0D9488] text-white border-2 border-[#0D9488] shadow-sm transition flex items-center justify-center gap-2";
+      const kelasNonAktif = "py-3 px-4 rounded-xl font-heading font-bold text-sm border border-[#E5DEC9] bg-[#F7F4EF] text-[#0B1D28] hover:border-[#0D9488] transition flex items-center justify-center gap-2";
+
+      document.getElementById("btnGrupA").className = grup === "Grup A" ? kelasAktif : kelasNonAktif;
+      document.getElementById("btnGrupB").className = grup === "Grup B" ? kelasAktif : kelasNonAktif;
+
+      const indikator = document.getElementById("indikatorGrup");
+      if (indikator) {
+        indikator.textContent = `${grup} dipilih`;
+      }
+
+      const select = document.getElementById("selectNama");
+      select.disabled = false;
+      select.innerHTML = '<option value="">-- Pilih Nama Anda --</option>';
+
+      dataAnggota[grup].forEach(nama => {
+        const opt = document.createElement("option");
+        opt.value = nama;
+        opt.textContent = nama;
+        select.appendChild(opt);
+      });
+
+      sinkronProfilPetugas();
+    }
+
+    // Efek Visual Confetti PULO-MAPS & Getar Kartu (Tactile Feedback)
+    const WARNA_CONFETTI_PULO = ["#0D9488", "#FF6B4A", "#CCFBF1", "#14B8A6", "#F59E0B"];
+
+    function luncurkanConfettiPulo(intensitas = "penuh") {
+      if (typeof window.confetti === "function") {
+        const jumlah = intensitas === "penuh" ? 80 : 35;
+        window.confetti({
+          particleCount: jumlah,
+          spread: 72,
+          origin: { y: 0.72 },
+          colors: WARNA_CONFETTI_PULO,
+          disableForReducedMotion: true
+        });
+
+        if (intensitas === "penuh") {
+          setTimeout(() => {
+            window.confetti({
+              particleCount: 45,
+              angle: 60,
+              spread: 55,
+              origin: { x: 0.15, y: 0.75 },
+              colors: WARNA_CONFETTI_PULO,
+              disableForReducedMotion: true
+            });
+            window.confetti({
+              particleCount: 45,
+              angle: 120,
+              spread: 55,
+              origin: { x: 0.85, y: 0.75 },
+              colors: WARNA_CONFETTI_PULO,
+              disableForReducedMotion: true
+            });
+          }, 160);
+        }
+      }
+    }
+
+    function picuEfekKartu(tipe) {
+      const kartuUtama = document.getElementById("kartuUtama");
+      const kartuJam = document.getElementById("kartuJamMasuk");
+      const kartuPreview = document.getElementById("kartuIdentitasPreview");
+
+      const kelasAnimasi = tipe === "sukses" ? "animate-card-success" : "animate-card-shake";
+
+      [kartuUtama, kartuJam, kartuPreview].forEach(el => {
+        if (!el) return;
+        el.classList.remove("animate-card-shake", "animate-card-success");
+        void el.offsetWidth; // Reflow agar animasi dapat dipicu berulang kali
+      });
+
+      if (kartuUtama) {
+        kartuUtama.classList.add(kelasAnimasi);
+        kartuUtama.setAttribute("data-feedback", tipe);
+      }
+      if (tipe === "sukses" && kartuJam) {
+        kartuJam.classList.add("ring-2", "ring-[#0D9488]/40", "bg-[#F0FDFA]/40");
+        setTimeout(() => {
+          kartuJam.classList.remove("ring-2", "ring-[#0D9488]/40", "bg-[#F0FDFA]/40");
+        }, 1200);
+      }
+
+      // Haptic feedback pada perangkat mobile jika didukung browser
+      if (navigator && typeof navigator.vibrate === "function") {
+        try {
+          navigator.vibrate(tipe === "sukses" ? [60, 40, 100] : [80, 50, 80]);
+        } catch (_) {}
+      }
+    }
+
+    async function kirimAbsen() {
+      const nama = document.getElementById("selectNama").value;
+      const pesan = document.getElementById("statusPesan");
+
+      if (!grupTerpilih || !nama) {
+        pesan.textContent = "⚠️ Pilih Grup dan Nama terlebih dahulu!";
+        pesan.className = "text-center text-sm font-semibold mt-4 py-2.5 px-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 animate-status-pop";
+        pesan.classList.remove("hidden");
+        picuEfekKartu("getar");
+        return;
+      }
+
+      pesan.textContent = "⏳ Mencatat kehadiran hari ini...";
+      pesan.className = "text-center text-sm font-semibold mt-4 py-2.5 px-4 rounded-xl bg-[#F7F4EF] border border-[#E5DEC9] text-[#0B1D28] animate-status-pop";
+      pesan.classList.remove("hidden");
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            tipe: "absensi",
+            grup: grupTerpilih,
+            nama: nama
+          })
+        });
+        const hasil = await res.json();
+        document.getElementById("infoPetugasAktif").textContent = hasil.petugasAktif;
+
+        if (hasil.status === "sudah_absen") {
+          pesan.textContent = `ℹ️ ${nama} sudah tercatat hadir hari ini!`;
+          pesan.className = "text-center text-sm font-semibold mt-4 py-2.5 px-4 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 animate-status-pop";
+          picuEfekKartu("sukses");
+          luncurkanConfettiPulo("ringan");
+        } else {
+          pesan.textContent = `✅ Berhasil! ${nama} (${grupTerpilih}) bertugas hari ini.`;
+          pesan.className = "text-center text-sm font-semibold mt-4 py-2.5 px-4 rounded-xl bg-[#F0FDFA] border border-[#CCFBF1] text-[#0D9488] animate-status-pop";
+          picuEfekKartu("sukses");
+          luncurkanConfettiPulo("penuh");
+        }
+      } catch (err) {
+        pesan.textContent = "❌ Gagal mengirim data. Cek koneksi / URL Script.";
+        pesan.className = "text-center text-sm font-semibold mt-4 py-2.5 px-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 animate-status-pop";
+        picuEfekKartu("getar");
+      }
+    }
+  </script>
+</body>
+</html>
